@@ -1,5 +1,6 @@
 import createDebug from 'debug';
-import { Eq, getStructEq, eqNumber, eqString, eq } from 'fp-ts/lib/Eq';
+import { Eq, getStructEq, eqNumber, eqString, contramap } from 'fp-ts/lib/Eq';
+import { getEq } from 'fp-ts/lib/Array';
 
 const currentFile = __filename.replace(process.env.PWD, '');
 const debug = createDebug(`test:${currentFile}`);
@@ -7,6 +8,16 @@ const debug = createDebug(`test:${currentFile}`);
 type Point = {
 	x: number,
 	y: number,
+};
+
+type Vector = {
+	from: Point,
+	to: Point,
+};
+
+type User = {
+	id: number,
+	name: string,
 };
 
 describe(`${currentFile}`, () => {
@@ -38,6 +49,119 @@ describe(`${currentFile}`, () => {
 			y: eqNumber,
 		});
 		testPointEq(eqPoint);
+	});
+
+	describe('vector equal', () => {
+		const eqPoint: Eq<Point> = getStructEq({
+			x: eqNumber,
+			y: eqNumber,
+		});
+
+		const eqVector: Eq<Vector> = getStructEq({
+			from: eqPoint,
+			to: eqPoint,
+		});
+
+		test('equal:', () => {
+			const v1 = { from: { x: 1, y: 1 }, to: { x: 2, y: 3 } };
+			const v2 = { from: { x: 1, y: 1 }, to: { x: 2, y: 3 } };
+			const result = eqVector.equals(v1, v2);
+			expect(result).toBe(true);
+		});
+
+
+		test('not equal:', () => {
+			const v1 = { from: { x: 1, y: 1 }, to: { x: 2, y: 3 } };
+			const v2 = { from: { x: 1, y: 1 }, to: { x: 2, y: 4 } };
+			const result = eqVector.equals(v1, v2);
+			expect(result).toBe(false);
+		});
+	});
+
+	describe('array getEq', () => {
+		const eqPoint = getStructEq({
+			x: eqNumber,
+			y: eqNumber,
+		});
+
+		const eqArrayOfPoints = getEq(eqPoint);
+
+		describe('equal', () => {
+			test('empty', () => {
+				const result = eqArrayOfPoints.equals([], []);
+				expect(result).toBeTruthy();
+			});
+
+			test('not empty', () => {
+				const result = eqArrayOfPoints.equals([{ x: 1, y: 1 }], [{ x: 1, y: 1 }]);
+				expect(result).toBeTruthy();
+			});
+		});
+
+		describe('not equal', () => {
+			test('empty and not empty', () => {
+				expect(
+					eqArrayOfPoints.equals(
+						[],
+						[{ x: 1, y: 2 }]
+					)
+				).toBeFalsy();
+			});
+
+			test('different', () => {
+				expect(
+					eqArrayOfPoints.equals(
+						[{ x: 1, y: 1 }],
+						[{ x: 2, y: 1 }],
+					)
+				).toBeFalsy();
+			});
+
+			test('length different', () => {
+				expect(
+					eqArrayOfPoints.equals(
+						[{ x: 1, y: 1 }],
+						[{ x: 1, y: 1 }, { x: 2, y: 2 }]
+					)
+				).toBeFalsy();
+			});
+		});
+	});
+
+	describe('contramap', () => {
+		const eqUser: Eq<User> = contramap((user: User) => user.id)(eqNumber);
+
+		test('equal', () => {
+			expect(
+				eqUser.equals(
+					{ id: 1, name: 'zs' },
+					{ id: 1, name: 'zs' }
+				)
+			).toBeTruthy();
+
+			expect(
+				eqUser.equals(
+					{ id: 1, name: 'zs' },
+					{ id: 1, name: 'ls' }
+				)
+			).toBeTruthy();
+		});
+
+		test('not equal', () => {
+			expect(
+				eqUser.equals(
+					{ id: 1, name: 'zs' },
+					{ id: 2, name: 'ls' }
+				)
+			).toBeFalsy();
+
+			expect(
+				eqUser.equals(
+					{ id: 1, name: 'zs' },
+					{ id: 2, name: 'zs' }
+				)
+			).toBeFalsy();
+		});
 	});
 });
 
