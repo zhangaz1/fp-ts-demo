@@ -61,10 +61,14 @@ describe(`${currentFile}`, () => {
 			testPassword(validatePassword);
 		});
 
+		describe('getValidationSemigroup', () => {
+
+		});
+
 		describe('getValidation', () => {
 			function lift<E, A>(check: (a: A) => Either<E, A>): (a: A) => Either<NonEmptyArray<E>, A> {
-				return a => pipe(
-					check(a),
+				return flow(
+					check,
 					mapLeft(a => [a])
 				);
 			}
