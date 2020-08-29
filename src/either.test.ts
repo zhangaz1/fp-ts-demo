@@ -13,7 +13,7 @@ import {
 import { pipe, flow } from 'fp-ts/lib/function';
 import { NonEmptyArray, getSemigroup } from 'fp-ts/lib/NonEmptyArray';
 import { sequenceT } from 'fp-ts/lib/Apply';
-import { semigroupAll } from 'fp-ts/lib/Semigroup';
+import { fold } from 'fp-ts/lib/Semigroup';
 
 const currentFile = __filename.replace(process.env.PWD, '');
 const debug = createDebug(`test:${currentFile}`);
@@ -62,7 +62,29 @@ describe(`${currentFile}`, () => {
 		});
 
 		describe('getValidationSemigroup', () => {
+			const validation = getValidationSemigroup(getSemigroup<string>(), getSemigroup<string>());
 
+			const lift = <A, E>(check: (a: A) => Either<E, A>): ((a: A) => Either<NonEmptyArray<E>, NonEmptyArray<A>>) =>
+				flow(check, mapLeft(a => [a] as NonEmptyArray<E>), map(a => [a] as NonEmptyArray<A>));
+
+			const minLengthV = lift(minLength);
+			const oneCapitalV = lift(oneCapital);
+			const oneNumberV = lift(oneNumber);
+
+			function validatePassword(s: string): Either<string[], string> {
+				const ss = getValidationSemigroup(getSemigroup<string>(), getSemigroup<string>());
+				return pipe(
+					fold(ss)(
+						minLengthV(s)
+					)([
+						oneCapitalV(s),
+						oneNumberV(s)
+					]),
+					map(() => s)
+				);
+			}
+
+			testPasswordByValidation(validatePassword);
 		});
 
 		describe('getValidation', () => {
@@ -88,32 +110,36 @@ describe(`${currentFile}`, () => {
 				) as Either<NonEmptyArray<string>, string>;
 			}
 
-			test('left', () => {
-				expect(
-					validatePassword('ab')
-				).toEqual(left([
-					"at least 6 characters",
-					"at least one capital letter",
-					"at least one number",
-				]));
-			});
-
-			test('right', () => {
-				expect(
-					validatePassword('A1bcdefg')
-				).toEqual(right('A1bcdefg'));
-			});
-
-			test('left & righ', () => {
-				expect(
-					validatePassword('abcdef1')
-				).toEqual(left([
-					"at least one capital letter",
-				]));
-			});
+			testPasswordByValidation(validatePassword);
 		});
 	});
 });
+
+function testPasswordByValidation(validatePassword) {
+	test('left', () => {
+		expect(
+			validatePassword('ab')
+		).toEqual(left([
+			"at least 6 characters",
+			"at least one capital letter",
+			"at least one number",
+		]));
+	});
+
+	test('right', () => {
+		expect(
+			validatePassword('A1bcdefg')
+		).toEqual(right('A1bcdefg'));
+	});
+
+	test('left & righ', () => {
+		expect(
+			validatePassword('abcdef1')
+		).toEqual(left([
+			"at least one capital letter",
+		]));
+	});
+}
 
 function testPassword(validatePassword: (s: string) => Either<string, string>) {
 	expect(validatePassword('ab')).toEqual(left('at least 6 characters'));
