@@ -16,6 +16,7 @@ import { sequenceT } from 'fp-ts/lib/Apply';
 import { Semigroup, getLastSemigroup } from 'fp-ts/lib/Semigroup';
 import { map as arrayMap } from 'fp-ts/lib/Array';
 import { Monoid, fold } from 'fp-ts/lib/Monoid';
+import { nonEmptyArray } from 'fp-ts';
 
 const currentFile = __filename.replace(process.env.PWD, '');
 const debug = createDebug(`test:${currentFile}`);
@@ -125,6 +126,64 @@ describe(`${currentFile}`, () => {
 
 			testPasswordByValidation(validatePassword);
 		});
+	});
+
+	describe('validate person', () => {
+		interface Person {
+			name: string;
+			age: number;
+		}
+
+		const toPerson = ([name, age]: [string, number]): Person => ({ name, age });
+
+		const validateName = (name: string): Either<NonEmptyArray<string>, string> =>
+			name.length === 0 ? left(['Invalid name']) : right(name);
+
+		const validateAge = (age: string): Either<NonEmptyArray<string>, number> =>
+			isNaN(+age) ? left(['Invalid age']) : right(+age);
+
+		function validatePerson(name: string, age: string): Either<NonEmptyArray<string>, Person> {
+			const applicativeValidation = getValidation(getSemigroup<string>());
+			return pipe(
+				sequenceT(applicativeValidation)(
+					validateName(name),
+					validateAge(age)
+				),
+				map(toPerson)
+			);
+		}
+
+		test('invalid name', () => {
+			expect(
+				validatePerson('', '5')
+			).toEqual(
+				left(['Invalid name'])
+			);
+		});
+
+		test('invalid age', () => {
+			expect(
+				validatePerson('zs', 'x5')
+			).toEqual(
+				left(['Invalid age'])
+			);
+		});
+
+		test('invalid all', () => {
+			expect(
+				validatePerson('', 'x')
+			).toEqual(
+				left(['Invalid name', 'Invalid age'])
+			);
+		});
+
+		test('passed', () => {
+			expect(
+				validatePerson('zs', '5')
+			).toEqual(
+				right({ name: 'zs', age: 5 })
+			);
+		})
 	});
 });
 
