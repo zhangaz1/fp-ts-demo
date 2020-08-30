@@ -1,12 +1,20 @@
 import fs from 'fs';
 import createDebug from 'debug';
-import { IOEither, tryCatch, flatten, chain } from 'fp-ts/lib/IOEither';
+import {
+	isRight,
+	isLeft,
+	toError,
+} from 'fp-ts/lib/Either';
+import {
+	IOEither,
+	tryCatch,
+} from 'fp-ts/lib/IOEither';
 
 const currentFile = __filename.replace(process.env.PWD, '');
 const debug = createDebug(`test:${currentFile}`);
 
 describe(`${currentFile}`, () => {
-	test('IOEither', () => {
+	describe('IOEither', () => {
 		function readFileSync(path: string): IOEither<Error, string> {
 			return tryCatch(
 				() => fs.readFileSync(path, 'utf8'),
@@ -14,10 +22,21 @@ describe(`${currentFile}`, () => {
 			);
 		}
 
-		const result = readFileSync('./package.json');
-		debug('file:', result());
+		test('right', () => {
+			expect(
+				isRight(
+					readFileSync('./package.json')()
+				)
+			).toBeTruthy();
+		});
 
-		const result2 = readFileSync('./xx.abc');
-		debug('result2:', result2());
+		test('left', () => {
+			expect(
+				isLeft(
+					readFileSync('./xx.abc')()
+				)
+			).toBeTruthy();
+		});
 	});
 });
+
