@@ -82,18 +82,19 @@ describe(`${currentFile}`, () => {
 					empty: right(s),
 				};
 
-				const validationResults = arrayMap(
-					flow(
-						lift,
-						f => f(s)
+				return flow(
+					arrayMap(
+						flow(
+							lift,
+							f => f(s)
+						),
 					),
+					fold(monoidValidation)
 				)([
 					minLength,
 					oneCapital,
 					oneNumber,
 				]);
-
-				return fold(monoidValidation)(validationResults);
 			}
 
 			testPasswordByValidation(validatePassword);

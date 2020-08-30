@@ -14,14 +14,14 @@
 			"stopOnEntry": false,
 			"runtimeExecutable": "tyarn",
 			// "program": "${workspaceRoot}/node_modules/umi-test/bin/umi-test.js",
-			"args": [
-				"-w"
-			],
 			"env": {
-				"DEBUG": "test"
+				// "DEBUG": "test"
 			},
 			"runtimeArgs": [
 				"test"
+			],
+			"args": [
+				// "-w"
 			]
 		}
 	]
