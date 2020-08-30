@@ -52,8 +52,10 @@ describe(`${currentFile}`, () => {
 		];
 
 		const randomReadFile = ioEither.chain(
-			map((n: number) => files[n])
-				(rightIO(randomInt(0, 2))),
+			ioEither.map(
+				rightIO(randomInt(0, 2)),
+				(n: number) => files[n]
+			),
 			readFileSync
 		);
 
