@@ -13,7 +13,7 @@ import {
 import { pipe, flow } from 'fp-ts/lib/function';
 import { NonEmptyArray, getSemigroup } from 'fp-ts/lib/NonEmptyArray';
 import { sequenceT } from 'fp-ts/lib/Apply';
-import { Semigroup } from 'fp-ts/lib/Semigroup';
+import { Semigroup, getLastSemigroup } from 'fp-ts/lib/Semigroup';
 import { map as arrayMap } from 'fp-ts/lib/Array';
 import { Monoid, fold } from 'fp-ts/lib/Monoid';
 
@@ -64,18 +64,25 @@ describe(`${currentFile}`, () => {
 		});
 
 		describe('getValidationSemigroup', () => {
-			const lift = <A = string, E = string>(check: (a: A) => Either<E, A>): ((a: A) => Either<E[], A[]>) =>
-				flow(check, mapLeft(a => [a]), map(a => [a]));
+			const lift = <A = string, E = string>(check: (a: A) => Either<E, A>): ((a: A) => Either<E[], A>) =>
+				flow(
+					check,
+					mapLeft(a => [a])
+				);
 
-			const semigroupValidation: Semigroup<Either<string[], string[]>> = getValidationSemigroup(getSemigroup<string>(), getSemigroup<string>());
-
-			const monoidValidation: Monoid<Either<string[], string[]>> = {
-				concat: semigroupValidation.concat,
-				empty: right([]),
-			};
+			const semigroupValidation: Semigroup<Either<string[], string>> =
+				getValidationSemigroup(
+					getSemigroup<string>(),
+					getLastSemigroup<string>()
+				);
 
 			function validatePassword(s: string): Either<string[], string> {
-				const validations = arrayMap(
+				const monoidValidation: Monoid<Either<string[], string>> = {
+					concat: semigroupValidation.concat,
+					empty: right(s),
+				};
+
+				const validationResults = arrayMap(
 					flow(
 						lift,
 						f => f(s)
@@ -86,10 +93,7 @@ describe(`${currentFile}`, () => {
 					oneNumber,
 				]);
 
-				return pipe(
-					fold(monoidValidation)(validations),
-					map(() => s)
-				);
+				return fold(monoidValidation)(validationResults);
 			}
 
 			testPasswordByValidation(validatePassword);
