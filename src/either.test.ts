@@ -13,7 +13,9 @@ import {
 import { pipe, flow } from 'fp-ts/lib/function';
 import { NonEmptyArray, getSemigroup } from 'fp-ts/lib/NonEmptyArray';
 import { sequenceT } from 'fp-ts/lib/Apply';
-import { fold } from 'fp-ts/lib/Semigroup';
+import { Semigroup } from 'fp-ts/lib/Semigroup';
+import { map as arrayMap } from 'fp-ts/lib/Array';
+import { Monoid, fold } from 'fp-ts/lib/Monoid';
 
 const currentFile = __filename.replace(process.env.PWD, '');
 const debug = createDebug(`test:${currentFile}`);
@@ -62,24 +64,30 @@ describe(`${currentFile}`, () => {
 		});
 
 		describe('getValidationSemigroup', () => {
-			const validation = getValidationSemigroup(getSemigroup<string>(), getSemigroup<string>());
+			const lift = <A = string, E = string>(check: (a: A) => Either<E, A>): ((a: A) => Either<E[], A[]>) =>
+				flow(check, mapLeft(a => [a]), map(a => [a]));
 
-			const lift = <A, E>(check: (a: A) => Either<E, A>): ((a: A) => Either<NonEmptyArray<E>, NonEmptyArray<A>>) =>
-				flow(check, mapLeft(a => [a] as NonEmptyArray<E>), map(a => [a] as NonEmptyArray<A>));
+			const semigroupValidation: Semigroup<Either<string[], string[]>> = getValidationSemigroup(getSemigroup<string>(), getSemigroup<string>());
 
-			const minLengthV = lift(minLength);
-			const oneCapitalV = lift(oneCapital);
-			const oneNumberV = lift(oneNumber);
+			const monoidValidation: Monoid<Either<string[], string[]>> = {
+				concat: semigroupValidation.concat,
+				empty: right([]),
+			};
 
 			function validatePassword(s: string): Either<string[], string> {
-				const ss = getValidationSemigroup(getSemigroup<string>(), getSemigroup<string>());
+				const validations = arrayMap(
+					flow(
+						lift,
+						f => f(s)
+					),
+				)([
+					minLength,
+					oneCapital,
+					oneNumber,
+				]);
+
 				return pipe(
-					fold(ss)(
-						minLengthV(s)
-					)([
-						oneCapitalV(s),
-						oneNumberV(s)
-					]),
+					fold(monoidValidation)(validations),
 					map(() => s)
 				);
 			}
