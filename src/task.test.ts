@@ -13,10 +13,11 @@ describe(`${currentFile}`, () => {
 					input: process.stdin,
 					output: process.stdout,
 				});
-				rl.question('give me your answer:', answer => {
-					rl.close;
-					resolve(answer);
-				});
+				// rl.question('give me your answer:', answer => {
+				// 	rl.close;
+				// 	resolve(answer);
+				// });
+				resolve('abc');
 			});
 		};
 
