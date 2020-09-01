@@ -1,5 +1,6 @@
 import createDebug from 'debug';
 import * as fp from 'fp-ts';
+import { randomInt } from 'fp-ts/lib/Random';
 
 const currentFile = __filename.replace(process.env.PWD, '');
 const debug = createDebug(`test:${currentFile}`);
@@ -64,16 +65,18 @@ describe(`${currentFile}`, () => {
 			? 1
 			: fib(n - 1) + fib(n - 2);
 
+	const randomFib = () => fp.io.map(fib)(fp.random.randomInt(30, 35));
+
 	test('withLogging', () => {
 		const spyLog = jest.spyOn(console, 'log');
 
-		const program = fp.io.chain(withLogging)(() => () => fib(35));
+		const program = fp.io.chain(withLogging)(randomFib);
 		expect(program).toBeInstanceOf(Function);
 
 		program();
 
 		expect(spyLog).toHaveBeenCalled();
-		expect(spyLog.mock.calls[0][0]).toMatch(/^Result: 14930352, Elapsed: \d+$/);
+		expect(spyLog.mock.calls[0][0]).toMatch(/^Result: \d+, Elapsed: \d+$/);
 		expect(spyLog.mock.results[0].value).toBeInstanceOf(Function);
 	})
 });
