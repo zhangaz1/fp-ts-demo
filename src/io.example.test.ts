@@ -67,16 +67,33 @@ describe(`${currentFile}`, () => {
 
 	const randomFib = () => fp.io.map(fib)(fp.random.randomInt(30, 35));
 
+	const program = fp.io.chain(withLogging)(randomFib);
+
+	test('program', () => {
+		expect(program).toBeInstanceOf(Function);
+	});
+
 	test('withLogging', () => {
 		const spyLog = jest.spyOn(console, 'log');
-
-		const program = fp.io.chain(withLogging)(randomFib);
-		expect(program).toBeInstanceOf(Function);
 
 		program();
 
 		expect(spyLog).toHaveBeenCalled();
 		expect(spyLog.mock.calls[0][0]).toMatch(/^Result: \d+, Elapsed: \d+$/);
 		expect(spyLog.mock.results[0].value).toBeInstanceOf(Function);
+	});
+
+	function fastTest<A>(head: fp.io.IO<A>, tail: Array<fp.io.IO<A>>): fp.io.IO<A> {
+		const ordTuple = fp.ord.contramap(([_, elapsed]: [A, number]) => elapsed)(fp.ord.ordNumber);
+		const semigroupTuple = fp.semigroup.getMeetSemigroup(ordTuple);
+		const semigroupIO = fp.io.getSemigroup(semigroupTuple);
+		const fast = fp.semigroup.fold(semigroupIO)(time2(head), tail.map(time2));
+		const ignoreSnd = <A>(ma: fp.io.IO<[A, unknown]>): fp.io.IO<A> =>
+			fp.io.map(([a]) => a)(ma);
+		return ignoreSnd(fast);
+	}
+
+	test('fastTest', () => {
+		console.log(fastTest(program, [program, program])())();
 	})
 });
