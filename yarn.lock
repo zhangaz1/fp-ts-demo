@@ -2282,6 +2282,13 @@ extsprintf@^1.2.0:
   resolved "https://registry.npm.taobao.org/extsprintf/download/extsprintf-1.4.0.tgz#e2689f8f356fad62cca65a3a91c5df5f9551692f"
   integrity sha1-4mifjzVvrWLMplo6kcXfX5VRaS8=
 
+fast-check@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.npm.taobao.org/fast-check/download/fast-check-2.2.1.tgz#60c9454d0909655a021fa60eb981cb2193e40578"
+  integrity sha1-YMlFTQkJZVoCH6YOuYHLIZPkBXg=
+  dependencies:
+    pure-rand "^3.0.0"
+
 fast-deep-equal@^3.1.1:
   version "3.1.3"
   resolved "https://registry.npm.taobao.org/fast-deep-equal/download/fast-deep-equal-3.1.3.tgz?cache=0&sync_timestamp=1591599675178&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Ffast-deep-equal%2Fdownload%2Ffast-deep-equal-3.1.3.tgz#3a7d56b559d6cbc3eb512325244e619a65c6c525"
@@ -4015,6 +4022,11 @@ punycode@^2.1.0, punycode@^2.1.1:
   version "2.1.1"
   resolved "https://registry.npm.taobao.org/punycode/download/punycode-2.1.1.tgz#b58b010ac40c22c5657616c8d2c2c02c7bf479ec"
   integrity sha1-tYsBCsQMIsVldhbI0sLALHv0eew=
+
+pure-rand@^3.0.0:
+  version "3.1.0"
+  resolved "https://registry.npm.taobao.org/pure-rand/download/pure-rand-3.1.0.tgz#646b812635cbac86105c46b0b03aa5dac1c759b3"
+  integrity sha1-ZGuBJjXLrIYQXEawsDql2sHHWbM=
 
 qs@~6.5.2:
   version "6.5.2"
